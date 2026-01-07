@@ -1,7 +1,7 @@
 package com.gymmybro.application.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -22,7 +22,7 @@ public class ExerciseDbApiResponse {
     /**
      * ExerciseDB unique ID (string, e.g., "0001")
      */
-    private String id;
+    private String exerciseId;
 
     /**
      * Exercise name
@@ -30,24 +30,24 @@ public class ExerciseDbApiResponse {
     private String name;
 
     /**
-     * Target muscle (e.g., "abs", "biceps")
+     * Target muscles (e.g., ["abs", "biceps"])
      */
-    private String target;
+    private List<String> targetMuscles;
 
     /**
-     * Body part (e.g., "waist", "upper arms")
+     * Body parts (e.g., ["waist", "upper arms"])
      */
-    private String bodyPart;
+    private List<String> bodyParts;
 
     /**
-     * Equipment needed (e.g., "body weight", "dumbbell")
+     * Equipment needed (e.g., ["body weight", "dumbbell"])
      */
-    private String equipment;
+    private List<String> equipments;
 
     /**
-     * GIF URL showing the exercise
+     * Image URL showing the exercise
      */
-    private String gifUrl;
+    private String imageUrl;
 
     /**
      * Secondary muscles worked

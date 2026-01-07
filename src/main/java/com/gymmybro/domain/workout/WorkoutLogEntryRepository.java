@@ -15,50 +15,51 @@ import java.util.UUID;
 @Repository
 public interface WorkoutLogEntryRepository extends JpaRepository<WorkoutLogEntry, UUID> {
 
-    /**
-     * Find all entries for a workout log
-     */
-    List<WorkoutLogEntry> findByWorkoutLogIdOrderBySetNumberAsc(UUID workoutLogId);
+        /**
+         * Find all entries for a workout log
+         */
+        List<WorkoutLogEntry> findByWorkoutLogIdOrderBySetNumberAsc(UUID workoutLogId);
 
-    /**
-     * Find entries for a specific exercise within a log
-     */
-    List<WorkoutLogEntry> findByWorkoutLogIdAndWorkoutExerciseIdOrderBySetNumberAsc(UUID workoutLogId,
-            UUID workoutExerciseId);
+        /**
+         * Find entries for a specific exercise within a log
+         */
+        List<WorkoutLogEntry> findByWorkoutLogIdAndWorkoutExerciseIdOrderBySetNumberAsc(UUID workoutLogId,
+                        UUID workoutExerciseId);
 
-    /**
-     * Get max weight lifted for an exercise by a trainee
-     */
-    @Query("SELECT MAX(wle.actualWeight) FROM WorkoutLogEntry wle " +
-            "JOIN wle.workoutLog wl " +
-            "WHERE wl.trainee.id = :traineeId AND wle.workoutExercise.exercise.id = :exerciseId")
-    Double getMaxWeightByTraineeAndExercise(@Param("traineeId") UUID traineeId,
-            @Param("exerciseId") Integer exerciseId);
+        /**
+         * Get max weight lifted for an exercise by a trainee (by external ID)
+         */
+        @Query("SELECT MAX(wle.actualWeight) FROM WorkoutLogEntry wle " +
+                        "JOIN wle.workoutLog wl " +
+                        "WHERE wl.trainee.id = :traineeId AND wle.workoutExercise.exerciseExternalId = :exerciseExternalId")
+        Double getMaxWeightByTraineeAndExercise(@Param("traineeId") UUID traineeId,
+                        @Param("exerciseExternalId") String exerciseExternalId);
 
-    /**
-     * Get total volume (weight * reps) for an exercise by a trainee
-     */
-    @Query("SELECT SUM(wle.actualWeight * wle.actualReps) FROM WorkoutLogEntry wle " +
-            "JOIN wle.workoutLog wl " +
-            "WHERE wl.trainee.id = :traineeId AND wle.workoutExercise.exercise.id = :exerciseId")
-    Double getTotalVolumeByTraineeAndExercise(@Param("traineeId") UUID traineeId,
-            @Param("exerciseId") Integer exerciseId);
+        /**
+         * Get total volume (weight * reps) for an exercise by a trainee (by external
+         * ID)
+         */
+        @Query("SELECT SUM(wle.actualWeight * wle.actualReps) FROM WorkoutLogEntry wle " +
+                        "JOIN wle.workoutLog wl " +
+                        "WHERE wl.trainee.id = :traineeId AND wle.workoutExercise.exerciseExternalId = :exerciseExternalId")
+        Double getTotalVolumeByTraineeAndExercise(@Param("traineeId") UUID traineeId,
+                        @Param("exerciseExternalId") String exerciseExternalId);
 
-    /**
-     * Get average RPE for a trainee
-     */
-    @Query("SELECT AVG(wle.rpe) FROM WorkoutLogEntry wle " +
-            "JOIN wle.workoutLog wl " +
-            "WHERE wl.trainee.id = :traineeId AND wle.rpe IS NOT NULL")
-    Double getAverageRpeByTrainee(@Param("traineeId") UUID traineeId);
+        /**
+         * Get average RPE for a trainee
+         */
+        @Query("SELECT AVG(wle.rpe) FROM WorkoutLogEntry wle " +
+                        "JOIN wle.workoutLog wl " +
+                        "WHERE wl.trainee.id = :traineeId AND wle.rpe IS NOT NULL")
+        Double getAverageRpeByTrainee(@Param("traineeId") UUID traineeId);
 
-    /**
-     * Count completed sets for a workout log
-     */
-    long countByWorkoutLogIdAndIsCompletedTrue(UUID workoutLogId);
+        /**
+         * Count completed sets for a workout log
+         */
+        long countByWorkoutLogIdAndIsCompletedTrue(UUID workoutLogId);
 
-    /**
-     * Delete all entries for a workout log
-     */
-    void deleteByWorkoutLogId(UUID workoutLogId);
+        /**
+         * Delete all entries for a workout log
+         */
+        void deleteByWorkoutLogId(UUID workoutLogId);
 }

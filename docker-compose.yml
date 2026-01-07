@@ -23,6 +23,7 @@ services:
     networks:
       - gymmy-network
 
+
 volumes:
   postgres_data:
     driver: local

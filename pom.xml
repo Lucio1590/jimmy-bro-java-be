@@ -97,16 +97,14 @@
         </dependency>
         
         <!-- Third-Party APIs -->
+        
+        <!-- Environment Variables -->
         <dependency>
-            <groupId>com.cloudinary</groupId>
-            <artifactId>cloudinary-http45</artifactId>
-            <version>${cloudinary.version}</version>
+            <groupId>me.paulschwarz</groupId>
+            <artifactId>spring-dotenv</artifactId>
+            <version>4.0.0</version>
         </dependency>
-        <dependency>
-            <groupId>com.mailgun</groupId>
-            <artifactId>mailgun-java</artifactId>
-            <version>${mailgun.version}</version>
-        </dependency>
+
         
         <!-- Utilities -->
         <dependency>

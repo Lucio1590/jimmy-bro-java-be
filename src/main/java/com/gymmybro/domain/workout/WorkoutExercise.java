@@ -1,6 +1,5 @@
 package com.gymmybro.domain.workout;
 
-import com.gymmybro.domain.exercise.Exercise;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -9,6 +8,7 @@ import java.util.UUID;
 /**
  * WorkoutExercise entity representing an exercise within a workout block.
  * Contains the prescribed sets, reps, and other parameters.
+ * References exercises via ExerciseDB external ID (not local storage).
  */
 @Entity
 @Table(name = "workout_exercises")
@@ -27,9 +27,24 @@ public class WorkoutExercise {
     @JoinColumn(name = "workout_block_id", nullable = false)
     private WorkoutBlock workoutBlock;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "exercise_id", nullable = false)
-    private Exercise exercise;
+    /**
+     * ExerciseDB external ID (e.g., "0001", "0002")
+     * This references the exercise in the ExerciseDB API
+     */
+    @Column(name = "exercise_external_id", nullable = false)
+    private String exerciseExternalId;
+
+    /**
+     * Cached exercise name for quick display without API call
+     */
+    @Column(name = "exercise_name")
+    private String exerciseName;
+
+    /**
+     * Cached exercise GIF URL for quick display
+     */
+    @Column(name = "exercise_gif_url")
+    private String exerciseGifUrl;
 
     /**
      * Order of this exercise within the block

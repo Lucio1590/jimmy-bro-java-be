@@ -31,7 +31,7 @@ public interface WorkoutExerciseRepository extends JpaRepository<WorkoutExercise
     /**
      * Count exercises using a specific exercise ID
      */
-    long countByExerciseId(Integer exerciseId);
+    long countByExerciseExternalId(String exerciseExternalId);
 
     /**
      * Delete all exercises for a block

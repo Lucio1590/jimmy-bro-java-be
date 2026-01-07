@@ -4,9 +4,7 @@
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- =====================================================
--- 1. USERS TABLE
--- =====================================================
+-- USERS
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     email VARCHAR(255) NOT NULL UNIQUE,
@@ -26,9 +24,7 @@ CREATE INDEX idx_users_pt_id ON users(pt_id);
 CREATE INDEX idx_users_role ON users(role);
 CREATE INDEX idx_users_email ON users(email);
 
--- =====================================================
--- 2. REFRESH TOKENS TABLE
--- =====================================================
+-- REFRESH TOKENS
 CREATE TABLE refresh_tokens (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -43,9 +39,7 @@ CREATE TABLE refresh_tokens (
 CREATE INDEX idx_refresh_tokens_user_id ON refresh_tokens(user_id);
 CREATE INDEX idx_refresh_tokens_expires_at ON refresh_tokens(expires_at);
 
--- =====================================================
--- 3. REVOKED ACCESS TOKENS TABLE
--- =====================================================
+-- REVOKED ACCESS TOKENS
 CREATE TABLE revoked_access_tokens (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     jti VARCHAR(255) NOT NULL UNIQUE,
@@ -58,29 +52,7 @@ CREATE TABLE revoked_access_tokens (
 CREATE INDEX idx_revoked_tokens_jti ON revoked_access_tokens(jti);
 CREATE INDEX idx_revoked_tokens_expires_at ON revoked_access_tokens(expires_at);
 
--- =====================================================
--- 4. EXERCISES TABLE
--- =====================================================
-CREATE TABLE exercises (
-    id SERIAL PRIMARY KEY,
-    external_id VARCHAR(100) UNIQUE,
-    name VARCHAR(255) NOT NULL,
-    target_muscle VARCHAR(100),
-    body_part VARCHAR(100),
-    category VARCHAR(50) NOT NULL,
-    equipment VARCHAR(100),
-    gif_url VARCHAR(500),
-    extra_data JSONB
-);
-
-CREATE INDEX idx_exercises_name ON exercises(name);
-CREATE INDEX idx_exercises_body_part ON exercises(body_part);
-CREATE INDEX idx_exercises_target_muscle ON exercises(target_muscle);
-CREATE INDEX idx_exercises_category ON exercises(category);
-
--- =====================================================
--- 5. WORKOUT PLANS TABLE
--- =====================================================
+-- WORKOUT PLANS
 CREATE TABLE workout_plans (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) NOT NULL,
@@ -96,9 +68,7 @@ CREATE TABLE workout_plans (
 CREATE INDEX idx_workout_plans_created_by ON workout_plans(created_by_id);
 CREATE INDEX idx_workout_plans_active ON workout_plans(is_active);
 
--- =====================================================
--- 6. WORKOUT DAYS TABLE
--- =====================================================
+-- WORKOUT DAYS
 CREATE TABLE workout_days (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     workout_plan_id UUID NOT NULL REFERENCES workout_plans(id) ON DELETE CASCADE,
@@ -110,9 +80,7 @@ CREATE TABLE workout_days (
 
 CREATE INDEX idx_workout_days_plan ON workout_days(workout_plan_id);
 
--- =====================================================
--- 7. WORKOUT BLOCKS TABLE
--- =====================================================
+-- WORKOUT BLOCKS
 CREATE TABLE workout_blocks (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     workout_day_id UUID NOT NULL REFERENCES workout_days(id) ON DELETE CASCADE,
@@ -125,13 +93,13 @@ CREATE TABLE workout_blocks (
 
 CREATE INDEX idx_workout_blocks_day ON workout_blocks(workout_day_id);
 
--- =====================================================
--- 8. WORKOUT EXERCISES TABLE
--- =====================================================
+-- WORKOUT EXERCISES
 CREATE TABLE workout_exercises (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     workout_block_id UUID NOT NULL REFERENCES workout_blocks(id) ON DELETE CASCADE,
-    exercise_id INTEGER NOT NULL REFERENCES exercises(id) ON DELETE RESTRICT,
+    exercise_external_id VARCHAR(100) NOT NULL,
+    exercise_name VARCHAR(255),
+    exercise_gif_url VARCHAR(500),
     exercise_order INTEGER NOT NULL,
     sets INTEGER,
     target_reps VARCHAR(50),
@@ -143,11 +111,9 @@ CREATE TABLE workout_exercises (
 );
 
 CREATE INDEX idx_workout_exercises_block ON workout_exercises(workout_block_id);
-CREATE INDEX idx_workout_exercises_exercise ON workout_exercises(exercise_id);
+CREATE INDEX idx_workout_exercises_external_id ON workout_exercises(exercise_external_id);
 
--- =====================================================
--- 9. WORKOUT PLAN ASSIGNMENTS TABLE
--- =====================================================
+-- WORKOUT PLAN ASSIGNMENTS
 CREATE TABLE workout_plan_assignments (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     trainee_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -164,9 +130,7 @@ CREATE INDEX idx_assignments_trainee ON workout_plan_assignments(trainee_id);
 CREATE INDEX idx_assignments_plan ON workout_plan_assignments(workout_plan_id);
 CREATE INDEX idx_assignments_active ON workout_plan_assignments(is_active);
 
--- =====================================================
--- 10. WORKOUT LOGS TABLE
--- =====================================================
+-- WORKOUT LOGS
 CREATE TABLE workout_logs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     trainee_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -184,9 +148,7 @@ CREATE INDEX idx_workout_logs_trainee ON workout_logs(trainee_id);
 CREATE INDEX idx_workout_logs_date ON workout_logs(workout_date);
 CREATE INDEX idx_workout_logs_day ON workout_logs(workout_day_id);
 
--- =====================================================
--- 11. WORKOUT LOG ENTRIES TABLE
--- =====================================================
+-- WORKOUT LOG ENTRIES
 CREATE TABLE workout_log_entries (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     workout_log_id UUID NOT NULL REFERENCES workout_logs(id) ON DELETE CASCADE,

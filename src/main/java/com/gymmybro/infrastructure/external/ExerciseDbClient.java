@@ -2,8 +2,8 @@ package com.gymmybro.infrastructure.external;
 
 import com.gymmybro.application.dto.response.ExerciseDbApiResponse;
 import com.gymmybro.config.ExerciseDbConfig;
+import com.gymmybro.application.service.ExerciseProvider;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -19,14 +19,14 @@ import java.util.List;
  */
 @Component
 @Slf4j
-public class ExerciseDbClient {
+public class ExerciseDbClient implements ExerciseProvider {
 
     private final WebClient webClient;
     private final ExerciseDbConfig config;
 
-    public ExerciseDbClient(ExerciseDbConfig config) {
+    public ExerciseDbClient(ExerciseDbConfig config, WebClient.Builder webClientBuilder) {
         this.config = config;
-        this.webClient = WebClient.builder()
+        this.webClient = webClientBuilder
                 .baseUrl(config.getBaseUrl())
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .build();
@@ -39,24 +39,23 @@ public class ExerciseDbClient {
      * @param offset Starting position
      * @return List of exercises from API
      */
+    @Override
     public List<ExerciseDbApiResponse> fetchAllExercises(int limit, int offset) {
         log.info("Fetching exercises from ExerciseDB: limit={}, offset={}", limit, offset);
 
         try {
-            List<ExerciseDbApiResponse> exercises = webClient.get()
+            ExerciseDbListResponse response = webClient.get()
                     .uri(uriBuilder -> uriBuilder
-                            .path("/exercises")
+                            .path("/api/v1/exercises")
                             .queryParam("limit", limit)
                             .queryParam("offset", offset)
                             .build())
                     .headers(this::addRapidApiHeaders)
                     .retrieve()
-                    .bodyToMono(new ParameterizedTypeReference<List<ExerciseDbApiResponse>>() {
-                    })
+                    .bodyToMono(ExerciseDbListResponse.class)
                     .block();
 
-            log.info("Fetched {} exercises from ExerciseDB", exercises != null ? exercises.size() : 0);
-            return exercises != null ? exercises : Collections.emptyList();
+            return response != null && response.getData() != null ? response.getData() : Collections.emptyList();
         } catch (WebClientResponseException e) {
             log.error("ExerciseDB API error: {} - {}", e.getStatusCode(), e.getMessage());
             throw new RuntimeException("Failed to fetch exercises from ExerciseDB: " + e.getMessage(), e);
@@ -66,19 +65,21 @@ public class ExerciseDbClient {
     /**
      * Search exercises by name.
      */
+    @Override
     public List<ExerciseDbApiResponse> searchByName(String name) {
         log.info("Searching exercises by name: {}", name);
 
         try {
-            List<ExerciseDbApiResponse> exercises = webClient.get()
-                    .uri("/exercises/name/{name}", name.toLowerCase())
+            ExerciseDbListResponse response = webClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/api/v1/exercises/name/" + name)
+                            .build())
                     .headers(this::addRapidApiHeaders)
                     .retrieve()
-                    .bodyToMono(new ParameterizedTypeReference<List<ExerciseDbApiResponse>>() {
-                    })
+                    .bodyToMono(ExerciseDbListResponse.class)
                     .block();
 
-            return exercises != null ? exercises : Collections.emptyList();
+            return response != null && response.getData() != null ? response.getData() : Collections.emptyList();
         } catch (WebClientResponseException e) {
             log.error("ExerciseDB search error: {}", e.getMessage());
             return Collections.emptyList();
@@ -88,104 +89,111 @@ public class ExerciseDbClient {
     /**
      * Filter exercises by body part.
      */
+    @Override
     public List<ExerciseDbApiResponse> filterByBodyPart(String bodyPart) {
         log.info("Filtering exercises by body part: {}", bodyPart);
-
-        try {
-            List<ExerciseDbApiResponse> exercises = webClient.get()
-                    .uri("/exercises/bodyPart/{bodyPart}", bodyPart.toLowerCase())
-                    .headers(this::addRapidApiHeaders)
-                    .retrieve()
-                    .bodyToMono(new ParameterizedTypeReference<List<ExerciseDbApiResponse>>() {
-                    })
-                    .block();
-
-            return exercises != null ? exercises : Collections.emptyList();
-        } catch (WebClientResponseException e) {
-            log.error("ExerciseDB filter error: {}", e.getMessage());
-            return Collections.emptyList();
-        }
+        return fetchListFromEndpoint("/api/v1/exercises/bodyPart/" + bodyPart);
     }
 
     /**
      * Filter exercises by target muscle.
      */
+    @Override
     public List<ExerciseDbApiResponse> filterByTarget(String target) {
         log.info("Filtering exercises by target: {}", target);
+        return fetchListFromEndpoint("/api/v1/exercises/target/" + target);
+    }
 
-        try {
-            List<ExerciseDbApiResponse> exercises = webClient.get()
-                    .uri("/exercises/target/{target}", target.toLowerCase())
-                    .headers(this::addRapidApiHeaders)
-                    .retrieve()
-                    .bodyToMono(new ParameterizedTypeReference<List<ExerciseDbApiResponse>>() {
-                    })
-                    .block();
-
-            return exercises != null ? exercises : Collections.emptyList();
-        } catch (WebClientResponseException e) {
-            log.error("ExerciseDB filter error: {}", e.getMessage());
-            return Collections.emptyList();
-        }
+    /**
+     * Filter exercises by equipment type.
+     */
+    @Override
+    public List<ExerciseDbApiResponse> filterByEquipment(String equipment) {
+        log.info("Filtering exercises by equipment: {}", equipment);
+        return fetchListFromEndpoint("/api/v1/exercises/equipment/" + equipment);
     }
 
     /**
      * Get list of all body parts.
      */
+    @Override
     public List<String> getBodyParts() {
-        try {
-            List<String> bodyParts = webClient.get()
-                    .uri("/exercises/bodyPartList")
-                    .headers(this::addRapidApiHeaders)
-                    .retrieve()
-                    .bodyToMono(new ParameterizedTypeReference<List<String>>() {
-                    })
-                    .block();
-
-            return bodyParts != null ? bodyParts : Collections.emptyList();
-        } catch (WebClientResponseException e) {
-            log.error("ExerciseDB error fetching body parts: {}", e.getMessage());
-            return Collections.emptyList();
-        }
+        return fetchListStrings("/api/v1/bodyparts");
     }
 
     /**
      * Get list of all target muscles.
      */
+    @Override
     public List<String> getTargets() {
-        try {
-            List<String> targets = webClient.get()
-                    .uri("/exercises/targetList")
-                    .headers(this::addRapidApiHeaders)
-                    .retrieve()
-                    .bodyToMono(new ParameterizedTypeReference<List<String>>() {
-                    })
-                    .block();
-
-            return targets != null ? targets : Collections.emptyList();
-        } catch (WebClientResponseException e) {
-            log.error("ExerciseDB error fetching targets: {}", e.getMessage());
-            return Collections.emptyList();
-        }
+        return fetchListStrings("/api/v1/muscles");
     }
 
     /**
      * Get list of all equipment types.
      */
+    @Override
     public List<String> getEquipment() {
+        return fetchListStrings("/api/v1/equipments");
+    }
+
+    private List<ExerciseDbApiResponse> fetchListFromEndpoint(String path) {
         try {
-            List<String> equipment = webClient.get()
-                    .uri("/exercises/equipmentList")
+            ExerciseDbListResponse response = webClient.get()
+                    .uri(path)
                     .headers(this::addRapidApiHeaders)
                     .retrieve()
-                    .bodyToMono(new ParameterizedTypeReference<List<String>>() {
-                    })
+                    .bodyToMono(ExerciseDbListResponse.class)
                     .block();
 
-            return equipment != null ? equipment : Collections.emptyList();
+            return response != null && response.getData() != null ? response.getData() : Collections.emptyList();
         } catch (WebClientResponseException e) {
-            log.error("ExerciseDB error fetching equipment: {}", e.getMessage());
+            log.error("ExerciseDB API error for {}: {} - {}", path, e.getStatusCode(), e.getMessage());
             return Collections.emptyList();
+        }
+    }
+
+    private List<String> fetchListStrings(String path) {
+        try {
+            ExerciseDbGenericListResponse response = webClient.get()
+                    .uri(path)
+                    .headers(this::addRapidApiHeaders)
+                    .retrieve()
+                    .bodyToMono(ExerciseDbGenericListResponse.class)
+                    .block();
+
+            return response != null && response.getData() != null
+                    ? response.getData().stream().map(ExerciseDbMetadataResponse::getName).toList()
+                    : Collections.emptyList();
+        } catch (WebClientResponseException e) {
+            log.error("ExerciseDB API error for {}: {} - {}", path, e.getStatusCode(), e.getMessage());
+            return Collections.emptyList();
+        }
+    }
+
+    /**
+     * Get a single exercise by its ExerciseDB ID.
+     *
+     * @param externalId The ExerciseDB ID (e.g., "0001")
+     * @return Exercise details or null if not found
+     */
+
+    @Override
+    public ExerciseDbApiResponse getExerciseById(String externalId) {
+        log.info("Fetching exercise by ID: {}", externalId);
+
+        try {
+            ExerciseDbSingleResponse response = webClient.get()
+                    .uri("/api/v1/exercises/exercise/{id}", externalId)
+                    .headers(this::addRapidApiHeaders)
+                    .retrieve()
+                    .bodyToMono(ExerciseDbSingleResponse.class)
+                    .block();
+
+            return response != null ? response.getData() : null;
+        } catch (WebClientResponseException e) {
+            log.error("ExerciseDB error fetching exercise {}: {}", externalId, e.getMessage());
+            throw new RuntimeException("Failed to fetch exercise from ExerciseDB: " + e.getMessage(), e);
         }
     }
 

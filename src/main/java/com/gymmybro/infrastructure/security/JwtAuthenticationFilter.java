@@ -1,6 +1,5 @@
 package com.gymmybro.infrastructure.security;
 
-import com.gymmybro.domain.token.RevokedAccessTokenRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -28,7 +27,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final UserDetailsServiceImpl userDetailsService;
-    private final RevokedAccessTokenRepository revokedTokenRepository;
 
     @Override
     protected void doFilterInternal(
@@ -50,14 +48,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             // If we have a username and no existing authentication
             if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-
-                // Check if token is revoked
-                String jti = jwtService.extractJti(jwt);
-                if (revokedTokenRepository.existsByJti(jti)) {
-                    log.debug("Token has been revoked: {}", jti);
-                    filterChain.doFilter(request, response);
-                    return;
-                }
 
                 UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
 

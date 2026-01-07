@@ -1,16 +1,15 @@
 package com.gymmybro.application.dto.response;
 
-import com.gymmybro.domain.exercise.Exercise;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * Exercise response DTO for API responses.
+ * Data comes directly from ExerciseDB API.
  */
 @Data
 @Builder
@@ -18,43 +17,32 @@ import java.util.Map;
 @AllArgsConstructor
 public class ExerciseResponse {
 
-    private Integer id;
-    private String externalId;
+    private String id; // ExerciseDB external ID
     private String name;
-    private String targetMuscle;
+    private String target;
     private String bodyPart;
-    private String category;
     private String equipment;
     private String gifUrl;
     private List<String> instructions;
     private List<String> secondaryMuscles;
 
     /**
-     * Create ExerciseResponse from entity.
+     * Create ExerciseResponse from ExerciseDB API response.
      */
-    @SuppressWarnings("unchecked")
-    public static ExerciseResponse fromEntity(Exercise exercise) {
-        ExerciseResponse.ExerciseResponseBuilder builder = ExerciseResponse.builder()
-                .id(exercise.getId())
-                .externalId(exercise.getExternalId())
-                .name(exercise.getName())
-                .targetMuscle(exercise.getTargetMuscle())
-                .bodyPart(exercise.getBodyPart())
-                .category(exercise.getCategory())
-                .equipment(exercise.getEquipment())
-                .gifUrl(exercise.getGifUrl());
+    public static ExerciseResponse fromApiResponse(ExerciseDbApiResponse apiResponse) {
+        return ExerciseResponse.builder()
+                .id(apiResponse.getExerciseId())
+                .name(apiResponse.getName())
+                .target(getFirstOrNull(apiResponse.getTargetMuscles()))
+                .bodyPart(getFirstOrNull(apiResponse.getBodyParts()))
+                .equipment(getFirstOrNull(apiResponse.getEquipments()))
+                .gifUrl(apiResponse.getImageUrl())
+                .instructions(apiResponse.getInstructions())
+                .secondaryMuscles(apiResponse.getSecondaryMuscles())
+                .build();
+    }
 
-        // Extract extra data if present
-        Map<String, Object> extraData = exercise.getExtraData();
-        if (extraData != null) {
-            if (extraData.containsKey("instructions")) {
-                builder.instructions((List<String>) extraData.get("instructions"));
-            }
-            if (extraData.containsKey("secondaryMuscles")) {
-                builder.secondaryMuscles((List<String>) extraData.get("secondaryMuscles"));
-            }
-        }
-
-        return builder.build();
+    private static String getFirstOrNull(List<String> list) {
+        return list != null && !list.isEmpty() ? list.get(0) : null;
     }
 }

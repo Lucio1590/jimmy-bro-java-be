@@ -8,8 +8,7 @@ import com.gymmybro.application.dto.response.UserResponse;
 import com.gymmybro.config.JwtConfig;
 import com.gymmybro.domain.token.RefreshToken;
 import com.gymmybro.domain.token.RefreshTokenRepository;
-import com.gymmybro.domain.token.RevokedAccessToken;
-import com.gymmybro.domain.token.RevokedAccessTokenRepository;
+
 import com.gymmybro.domain.user.User;
 import com.gymmybro.domain.user.UserRepository;
 import com.gymmybro.exception.BadRequestException;
@@ -41,7 +40,7 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
-    private final RevokedAccessTokenRepository revokedTokenRepository;
+
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final JwtConfig jwtConfig;
@@ -69,8 +68,6 @@ public class AuthService {
 
         User savedUser = userRepository.save(user);
         log.info("User registered: {} with role {}", savedUser.getEmail(), savedUser.getRole());
-
-        // TODO: Send confirmation email via Mailgun
 
         return UserResponse.fromEntity(savedUser);
     }
@@ -139,17 +136,6 @@ public class AuthService {
     @Transactional
     public void logout(String accessToken) {
         try {
-            // Extract JTI from access token
-            String jti = jwtService.extractJti(accessToken);
-
-            // Add to revoked tokens
-            RevokedAccessToken revokedToken = RevokedAccessToken.builder()
-                    .jti(jti)
-                    .expiresAt(jwtService.extractExpiration(accessToken).toInstant())
-                    .userId(jwtService.extractUserId(accessToken))
-                    .revocationReason("USER_LOGOUT")
-                    .build();
-            revokedTokenRepository.save(revokedToken);
 
             // Revoke all refresh tokens for this user
             UUID userId = jwtService.extractUserId(accessToken);

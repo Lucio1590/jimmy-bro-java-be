@@ -16,6 +16,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
@@ -30,6 +31,7 @@ import java.util.UUID;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final ImageStorageService imageStorageService;
 
     /**
      * Get all users with optional filters (Admin only).
@@ -188,33 +190,66 @@ public class UserService {
     }
 
     /**
-     * Update user profile image URL (placeholder - will integrate with Cloudinary).
+     * Upload and update user profile image using Cloudinary.
      */
     @Transactional
-    public UserResponse updateProfileImage(UUID userId, String imageUrl) {
+    public UserResponse uploadProfileImage(UUID userId, MultipartFile file, UUID currentUserId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
 
+        // Users can only update their own profile image (unless admin)
+        User currentUser = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", currentUserId));
+
+        if (currentUser.getRole() != UserRole.ADMIN && !userId.equals(currentUserId)) {
+            throw new ForbiddenException("You can only update your own profile image");
+        }
+
+        // Delete old image if exists
+        if (user.getProfileImageUrl() != null) {
+            try {
+                imageStorageService.deleteProfileImage(userId);
+            } catch (Exception e) {
+                log.warn("Failed to delete old profile image for user {}: {}", userId, e.getMessage());
+            }
+        }
+
+        // Upload new image
+        String imageUrl = imageStorageService.uploadProfileImage(file, userId);
         user.setProfileImageUrl(imageUrl);
         User savedUser = userRepository.save(user);
 
-        log.info("Updated profile image for user {}", userId);
+        log.info("Updated profile image for user {} to {}", userId, imageUrl);
         return UserResponse.fromEntity(savedUser);
     }
 
     /**
-     * Delete user profile image (placeholder - will integrate with Cloudinary).
+     * Delete user profile image from Cloudinary.
      */
     @Transactional
-    public UserResponse deleteProfileImage(UUID userId) {
+    public UserResponse deleteProfileImage(UUID userId, UUID currentUserId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
 
-        String previousUrl = user.getProfileImageUrl();
+        // Users can only delete their own profile image (unless admin)
+        User currentUser = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", currentUserId));
+
+        if (currentUser.getRole() != UserRole.ADMIN && !userId.equals(currentUserId)) {
+            throw new ForbiddenException("You can only delete your own profile image");
+        }
+
+        if (user.getProfileImageUrl() == null) {
+            throw new BadRequestException("User has no profile image to delete");
+        }
+
+        // Delete from Cloudinary
+        imageStorageService.deleteProfileImage(userId);
+
         user.setProfileImageUrl(null);
         User savedUser = userRepository.save(user);
 
-        log.info("Deleted profile image for user {} (was: {})", userId, previousUrl);
+        log.info("Deleted profile image for user {}", userId);
         return UserResponse.fromEntity(savedUser);
     }
 }

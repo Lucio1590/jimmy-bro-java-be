@@ -1,183 +1,166 @@
 package com.gymmybro.application.service;
 
-import com.gymmybro.application.dto.request.CreateExerciseRequest;
 import com.gymmybro.application.dto.response.ExerciseDbApiResponse;
 import com.gymmybro.application.dto.response.ExerciseResponse;
 import com.gymmybro.application.dto.response.PaginatedResponse;
-import com.gymmybro.domain.exercise.Exercise;
-import com.gymmybro.domain.exercise.ExerciseRepository;
 import com.gymmybro.exception.ResourceNotFoundException;
-import com.gymmybro.infrastructure.external.ExerciseDbClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Service for exercise catalog operations.
+ * Proxies all requests directly to ExerciseDB API.
  */
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@Transactional(readOnly = true)
 public class ExerciseService {
 
-    private final ExerciseRepository exerciseRepository;
-    private final ExerciseDbClient exerciseDbClient;
+    private final ExerciseProvider exerciseProvider;
 
     /**
-     * Search exercises with filters.
+     * Search exercises by name.
+     *
+     * @param name   Search query
+     * @param limit  Number of results to return
+     * @param offset Starting position
+     * @return Paginated exercise responses
      */
     public PaginatedResponse<ExerciseResponse> searchExercises(
             String name,
-            String bodyPart,
-            String targetMuscle,
-            String equipment,
-            String category,
-            Pageable pageable) {
+            int limit,
+            int offset) {
 
-        Page<Exercise> exercisePage = exerciseRepository.findByFilters(
-                name, bodyPart, targetMuscle, equipment, category, pageable);
+        List<ExerciseDbApiResponse> apiResults;
 
-        List<ExerciseResponse> content = exercisePage.getContent().stream()
-                .map(ExerciseResponse::fromEntity)
+        if (name != null && !name.isBlank()) {
+            apiResults = exerciseProvider.searchByName(name);
+        } else {
+            apiResults = exerciseProvider.fetchAllExercises(limit, offset);
+        }
+
+        List<ExerciseResponse> content = apiResults.stream()
+                .map(ExerciseResponse::fromApiResponse)
                 .toList();
 
         return PaginatedResponse.<ExerciseResponse>builder()
                 .content(content)
-                .page(exercisePage.getNumber())
-                .size(exercisePage.getSize())
-                .totalElements(exercisePage.getTotalElements())
-                .totalPages(exercisePage.getTotalPages())
-                .first(exercisePage.isFirst())
-                .last(exercisePage.isLast())
+                .page(offset / limit)
+                .size(limit)
+                .totalElements(content.size())
+                .totalPages(1)
+                .first(offset == 0)
+                .last(true)
                 .build();
     }
 
     /**
-     * Get exercise by ID.
+     * Get all exercises with pagination.
+     *
+     * @param limit  Number of exercises to fetch (max 1000)
+     * @param offset Starting position
+     * @return Paginated exercise responses
      */
-    public ExerciseResponse getExerciseById(Integer id) {
-        Exercise exercise = exerciseRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Exercise", "id", id));
-        return ExerciseResponse.fromEntity(exercise);
-    }
+    public PaginatedResponse<ExerciseResponse> getAllExercises(int limit, int offset) {
+        List<ExerciseDbApiResponse> apiResults = exerciseProvider.fetchAllExercises(limit, offset);
 
-    /**
-     * Create a custom exercise.
-     */
-    @Transactional
-    public ExerciseResponse createExercise(CreateExerciseRequest request) {
-        Exercise exercise = Exercise.builder()
-                .name(request.getName())
-                .targetMuscle(request.getTargetMuscle())
-                .bodyPart(request.getBodyPart())
-                .category(request.getCategory())
-                .equipment(request.getEquipment())
-                .gifUrl(request.getGifUrl())
+        List<ExerciseResponse> content = apiResults.stream()
+                .map(ExerciseResponse::fromApiResponse)
+                .toList();
+
+        return PaginatedResponse.<ExerciseResponse>builder()
+                .content(content)
+                .page(offset / limit)
+                .size(limit)
+                .totalElements(content.size())
+                .totalPages(1)
+                .first(offset == 0)
+                .last(content.size() < limit)
                 .build();
-
-        // Store instructions and secondary muscles in extraData
-        if (request.getInstructions() != null || request.getSecondaryMuscles() != null) {
-            Map<String, Object> extraData = new HashMap<>();
-            if (request.getInstructions() != null) {
-                extraData.put("instructions", request.getInstructions());
-            }
-            if (request.getSecondaryMuscles() != null) {
-                extraData.put("secondaryMuscles", request.getSecondaryMuscles());
-            }
-            exercise.setExtraData(extraData);
-        }
-
-        Exercise saved = exerciseRepository.save(exercise);
-        log.info("Created custom exercise: {} (ID: {})", saved.getName(), saved.getId());
-        return ExerciseResponse.fromEntity(saved);
     }
 
     /**
-     * Trigger ingestion of exercises from ExerciseDB API.
-     * Returns number of exercises imported.
+     * Get exercise by ExerciseDB external ID.
+     *
+     * @param externalId The ExerciseDB ID (e.g., "0001")
+     * @return Exercise response
      */
-    @Transactional
-    public int triggerIngestion(int limit) {
-        log.info("Starting exercise ingestion from ExerciseDB (limit: {})", limit);
+    public ExerciseResponse getExerciseById(String externalId) {
+        ExerciseDbApiResponse apiResponse = exerciseProvider.getExerciseById(externalId);
 
-        List<ExerciseDbApiResponse> apiExercises = exerciseDbClient.fetchAllExercises(limit, 0);
-        int imported = 0;
-        int skipped = 0;
-
-        for (ExerciseDbApiResponse apiExercise : apiExercises) {
-            // Skip if already exists
-            if (exerciseRepository.existsByExternalId(apiExercise.getId())) {
-                skipped++;
-                continue;
-            }
-
-            Exercise exercise = mapApiResponseToEntity(apiExercise);
-            exerciseRepository.save(exercise);
-            imported++;
+        if (apiResponse == null) {
+            throw new ResourceNotFoundException("Exercise", "externalId", externalId);
         }
 
-        log.info("Exercise ingestion complete: {} imported, {} skipped (already exist)",
-                imported, skipped);
-        return imported;
+        return ExerciseResponse.fromApiResponse(apiResponse);
     }
 
     /**
-     * Get all body parts from database.
+     * Filter exercises by body part.
+     *
+     * @param bodyPart Body part to filter by (e.g., "chest", "back")
+     * @return List of exercise responses
+     */
+    public List<ExerciseResponse> filterByBodyPart(String bodyPart) {
+        List<ExerciseDbApiResponse> apiResults = exerciseProvider.filterByBodyPart(bodyPart);
+        return apiResults.stream()
+                .map(ExerciseResponse::fromApiResponse)
+                .toList();
+    }
+
+    /**
+     * Filter exercises by target muscle.
+     *
+     * @param target Target muscle to filter by (e.g., "biceps", "pectorals")
+     * @return List of exercise responses
+     */
+    public List<ExerciseResponse> filterByTarget(String target) {
+        List<ExerciseDbApiResponse> apiResults = exerciseProvider.filterByTarget(target);
+        return apiResults.stream()
+                .map(ExerciseResponse::fromApiResponse)
+                .toList();
+    }
+
+    /**
+     * Filter exercises by equipment.
+     *
+     * @param equipment Equipment to filter by (e.g., "barbell", "dumbbell")
+     * @return List of exercise responses
+     */
+    public List<ExerciseResponse> filterByEquipment(String equipment) {
+        List<ExerciseDbApiResponse> apiResults = exerciseProvider.filterByEquipment(equipment);
+        return apiResults.stream()
+                .map(ExerciseResponse::fromApiResponse)
+                .toList();
+    }
+
+    /**
+     * Get all body parts from ExerciseDB.
+     *
+     * @return List of body parts
      */
     public List<String> getAllBodyParts() {
-        return exerciseRepository.findAllBodyParts();
+        return exerciseProvider.getBodyParts();
     }
 
     /**
-     * Get all target muscles from database.
+     * Get all target muscles from ExerciseDB.
+     *
+     * @return List of target muscles
      */
     public List<String> getAllTargetMuscles() {
-        return exerciseRepository.findAllTargetMuscles();
+        return exerciseProvider.getTargets();
     }
 
     /**
-     * Get all equipment types from database.
+     * Get all equipment types from ExerciseDB.
+     *
+     * @return List of equipment types
      */
     public List<String> getAllEquipment() {
-        return exerciseRepository.findAllEquipment();
-    }
-
-    /**
-     * Get all categories from database.
-     */
-    public List<String> getAllCategories() {
-        return exerciseRepository.findAllCategories();
-    }
-
-    /**
-     * Map ExerciseDB API response to Exercise entity.
-     */
-    private Exercise mapApiResponseToEntity(ExerciseDbApiResponse apiResponse) {
-        Map<String, Object> extraData = new HashMap<>();
-        if (apiResponse.getInstructions() != null) {
-            extraData.put("instructions", apiResponse.getInstructions());
-        }
-        if (apiResponse.getSecondaryMuscles() != null) {
-            extraData.put("secondaryMuscles", apiResponse.getSecondaryMuscles());
-        }
-
-        return Exercise.builder()
-                .externalId(apiResponse.getId())
-                .name(apiResponse.getName())
-                .targetMuscle(apiResponse.getTarget())
-                .bodyPart(apiResponse.getBodyPart())
-                .category("STRENGTH") // Default category for imported exercises
-                .equipment(apiResponse.getEquipment())
-                .gifUrl(apiResponse.getGifUrl())
-                .extraData(extraData.isEmpty() ? null : extraData)
-                .build();
+        return exerciseProvider.getEquipment();
     }
 }

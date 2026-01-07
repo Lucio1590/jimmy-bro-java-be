@@ -97,6 +97,11 @@
         </dependency>
         
         <!-- Third-Party APIs -->
+        <dependency>
+            <groupId>com.cloudinary</groupId>
+            <artifactId>cloudinary-http44</artifactId>
+            <version>${cloudinary.version}</version>
+        </dependency>
         
         <!-- Environment Variables -->
         <dependency>

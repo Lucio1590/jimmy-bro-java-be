@@ -22,7 +22,7 @@ public class ExerciseDbApiResponse {
     /**
      * ExerciseDB unique ID (string, e.g., "0001")
      */
-    private String exerciseId;
+    private String id;
 
     /**
      * Exercise name
@@ -30,24 +30,24 @@ public class ExerciseDbApiResponse {
     private String name;
 
     /**
-     * Target muscles (e.g., ["abs", "biceps"])
+     * Target muscle (e.g., "abs")
      */
-    private List<String> targetMuscles;
+    private String target;
 
     /**
-     * Body parts (e.g., ["waist", "upper arms"])
+     * Body part (e.g., "waist")
      */
-    private List<String> bodyParts;
+    private String bodyPart;
 
     /**
-     * Equipment needed (e.g., ["body weight", "dumbbell"])
+     * Equipment needed (e.g., "body weight")
      */
-    private List<String> equipments;
+    private String equipment;
 
     /**
-     * Image URL showing the exercise
+     * GIF URL showing the exercise
      */
-    private String imageUrl;
+    private String gifUrl;
 
     /**
      * Secondary muscles worked

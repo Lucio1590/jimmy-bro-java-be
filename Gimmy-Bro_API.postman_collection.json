@@ -410,7 +410,7 @@
 							"raw": "{\n  \"ptId\": \"{{ptId}}\",\n  \"traineeId\": \"{{traineeId}}\"\n}"
 						},
 						"url": {
-							"raw": "{{baseUrl}}/api/v1/users/assign",
+							"raw": "{{baseUrl}}/api/v1/users/assignments",
 							"host": [
 								"{{baseUrl}}"
 							],
@@ -418,7 +418,7 @@
 								"api",
 								"v1",
 								"users",
-								"assign"
+								"assignments"
 							]
 						}
 					},
@@ -440,7 +440,7 @@
 						"method": "DELETE",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/v1/users/:traineeId/unassign",
+							"raw": "{{baseUrl}}/api/v1/users/assignments/:traineeId",
 							"host": [
 								"{{baseUrl}}"
 							],
@@ -448,8 +448,8 @@
 								"api",
 								"v1",
 								"users",
-								":traineeId",
-								"unassign"
+								"assignments",
+								":traineeId"
 							],
 							"variable": [
 								{
@@ -740,6 +740,130 @@
 									"key": "equipment",
 									"value": "barbell"
 								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Body Parts",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearerToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/exercises/metadata/body-parts",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"exercises",
+								"metadata",
+								"body-parts"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Categories",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearerToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/exercises/metadata/categories",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"exercises",
+								"metadata",
+								"categories"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Targets",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearerToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/exercises/metadata/targets",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"exercises",
+								"metadata",
+								"targets"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Equipment",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearerToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/exercises/metadata/equipment",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"exercises",
+								"metadata",
+								"equipment"
 							]
 						}
 					},
@@ -1088,7 +1212,7 @@
 						"method": "DELETE",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/v1/workout-plans/:id/assign/:traineeId",
+							"raw": "{{baseUrl}}/api/v1/workout-plans/:id/assignments/:traineeId",
 							"host": [
 								"{{baseUrl}}"
 							],
@@ -1097,7 +1221,7 @@
 								"v1",
 								"workout-plans",
 								":id",
-								"assign",
+								"assignments",
 								":traineeId"
 							],
 							"variable": [
@@ -1505,80 +1629,6 @@
 									"key": "traineeId",
 									"value": "{{traineeId}}"
 								}
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "Emails (Admin)",
-			"item": [
-				{
-					"name": "Send Email",
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{bearerToken}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"to\": \"user@example.com\",\n  \"subject\": \"Test Email\",\n  \"body\": \"<h1>Hello</h1><p>This is a test email.</p>\"\n}"
-						},
-						"url": {
-							"raw": "{{baseUrl}}/api/v1/emails/send",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"emails",
-								"send"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Get Email Templates",
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{bearerToken}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/api/v1/emails/templates",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"emails",
-								"templates"
 							]
 						}
 					},

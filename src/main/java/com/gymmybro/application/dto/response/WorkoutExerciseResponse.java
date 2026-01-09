@@ -75,9 +75,9 @@ public class WorkoutExerciseResponse {
 
         if (apiResponse != null) {
             builder.exerciseName(apiResponse.getName())
-                    .exerciseGifUrl(apiResponse.getImageUrl())
-                    .targetMuscle(getFirstOrNull(apiResponse.getTargetMuscles()))
-                    .equipment(getFirstOrNull(apiResponse.getEquipments()));
+                    .exerciseGifUrl(apiResponse.getGifUrl())
+                    .targetMuscle(apiResponse.getTarget())
+                    .equipment(apiResponse.getEquipment());
         } else {
             // Fall back to cached values
             builder.exerciseName(workoutExercise.getExerciseName())
@@ -85,9 +85,5 @@ public class WorkoutExerciseResponse {
         }
 
         return builder.build();
-    }
-
-    private static String getFirstOrNull(java.util.List<String> list) {
-        return list != null && !list.isEmpty() ? list.get(0) : null;
     }
 }

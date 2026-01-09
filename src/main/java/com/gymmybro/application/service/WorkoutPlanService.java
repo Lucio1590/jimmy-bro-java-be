@@ -378,7 +378,7 @@ public class WorkoutPlanService {
                 .workoutBlock(block)
                 .exerciseExternalId(request.getExerciseExternalId())
                 .exerciseName(apiResponse.getName())
-                .exerciseGifUrl(apiResponse.getImageUrl())
+                .exerciseGifUrl(apiResponse.getGifUrl())
                 .exerciseOrder(request.getExerciseOrder())
                 .sets(request.getSets())
                 .targetReps(request.getReps() != null ? String.valueOf(request.getReps()) : null)

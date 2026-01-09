@@ -3,14 +3,11 @@ package com.gymmybro.infrastructure.security;
 import com.gymmybro.domain.user.User;
 import com.gymmybro.domain.user.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Collections;
 
 /**
  * Implementation of Spring Security's UserDetailsService.
@@ -32,14 +29,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
             throw new UsernameNotFoundException("User account is deactivated: " + email);
         }
 
-        return new org.springframework.security.core.userdetails.User(
-                user.getEmail(),
-                user.getHashedPassword(),
-                user.isActive(),
-                true, // accountNonExpired
-                true, // credentialsNonExpired
-                true, // accountNonLocked
-                Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + user.getRole().name())));
+        return user;
     }
 
     /**

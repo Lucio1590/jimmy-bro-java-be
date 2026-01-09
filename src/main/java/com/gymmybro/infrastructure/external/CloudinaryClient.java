@@ -21,6 +21,7 @@ import java.util.UUID;
 @Component
 @RequiredArgsConstructor
 @Slf4j
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(name = "cloudinary.api-key")
 public class CloudinaryClient implements ImageStorageService {
 
     private final Cloudinary cloudinary;

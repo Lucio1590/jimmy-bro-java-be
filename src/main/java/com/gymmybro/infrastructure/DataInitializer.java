@@ -1,9 +1,7 @@
 package com.gymmybro.infrastructure;
 
 import com.gymmybro.application.dto.response.ExerciseDbApiResponse;
-import com.gymmybro.domain.user.User;
-import com.gymmybro.domain.user.UserRepository;
-import com.gymmybro.domain.user.UserRole;
+import com.gymmybro.domain.user.*;
 import com.gymmybro.domain.workout.*;
 import com.gymmybro.infrastructure.external.ExerciseDbClient;
 import lombok.RequiredArgsConstructor;
@@ -78,11 +76,11 @@ public class DataInitializer implements ApplicationRunner {
     }
 
     private User seedAdminUser() {
-        User admin = User.builder()
+        User admin = Admin.builder()
                 .email(adminEmail)
                 .hashedPassword(passwordEncoder.encode(adminPassword))
                 .fullName("System Administrator")
-                .role(UserRole.ADMIN)
+                // .role(UserRole.ADMIN) // Role is set by discriminator
                 .isActive(true)
                 .emailVerified(true)
                 .build();
@@ -95,20 +93,18 @@ public class DataInitializer implements ApplicationRunner {
     private List<User> seedPersonalTrainers() {
         List<User> pts = new ArrayList<>();
 
-        User pt1 = User.builder()
+        User pt1 = PersonalTrainer.builder()
                 .email("pt1@gymmybro.com")
                 .hashedPassword(passwordEncoder.encode("password"))
                 .fullName("Mike Mentzer")
-                .role(UserRole.PT)
                 .isActive(true)
                 .emailVerified(true)
                 .build();
 
-        User pt2 = User.builder()
+        User pt2 = PersonalTrainer.builder()
                 .email("pt2@gymmybro.com")
                 .hashedPassword(passwordEncoder.encode("password"))
                 .fullName("Arnold S")
-                .role(UserRole.PT)
                 .isActive(true)
                 .emailVerified(true)
                 .build();
@@ -123,11 +119,10 @@ public class DataInitializer implements ApplicationRunner {
         List<User> trainees = new ArrayList<>();
 
         for (int i = 1; i <= 3; i++) {
-            User trainee = User.builder()
+            User trainee = Trainee.builder()
                     .email("trainee" + i + "@gymmybro.com")
                     .hashedPassword(passwordEncoder.encode("password"))
                     .fullName("Trainee " + i)
-                    .role(UserRole.TRAINEE)
                     .isActive(true)
                     .emailVerified(true)
                     .build();

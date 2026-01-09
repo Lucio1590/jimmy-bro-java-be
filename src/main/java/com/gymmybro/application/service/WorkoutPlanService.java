@@ -257,6 +257,21 @@ public class WorkoutPlanService {
             throw new BadRequestException("User is not a trainee");
         }
 
+        // Validate that the trainee belongs to this PT (unless Admin)
+        if (assigner.getRole() != UserRole.ADMIN) {
+            if (trainee instanceof com.gymmybro.domain.user.Trainee) {
+                com.gymmybro.domain.user.Trainee t = (com.gymmybro.domain.user.Trainee) trainee;
+                if (t.getPersonalTrainer() == null || !t.getPersonalTrainer().getId().equals(assigner.getId())) {
+                    throw new ForbiddenException("You can only assign plans to your own trainees");
+                }
+            } else {
+                // Should ideally not happen given the role check, but safe fallback
+                // If for some reason inheritance isn't working or it's a proxy
+                // logic might be needed. But given Single Table, it should be the correct
+                // instance.
+            }
+        }
+
         // Check if already assigned
         if (assignmentRepository.existsByTraineeIdAndWorkoutPlanId(trainee.getId(), planId)) {
             throw new BadRequestException("Trainee is already assigned to this plan");

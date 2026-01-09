@@ -1,110 +1,70 @@
-This document outlines the requirements for the **Backend Programming** final exam project at **EPICODE Institute of Technology**.
+# Backend Programming Final Exam Project: Gymmy Bro
 
-## Project Overview
+This document outlines the requirements and constraints for the "Gymmy Bro" backend final project.
 
-The objective is to build a complete backend application using **Spring and PostgreSQL**. This practical project accounts for **50% of the final grade**, with the remaining 50% assessed via an oral examination.
+## 1. Project Theme
 
-The application must demonstrate:
+**Gymmy Bro**: A management platform for Personal Trainers (PTs) and Trainees. PTs create workout plans and assign them to their trainees. Trainees log their workouts.
 
-* Robust server-side features and data persistence.
+## 2. Entities & Domain Model
 
-* Validation, authentication, and business logic structuring.
+The domain model must include at least **eight tables** with coherent relationships.
 
-* Seamless interaction with databases and external services.
+- **Tables Required**: `users`, `workout_plans`, `workout_days`, `workout_blocks`, `workout_exercises`, `workout_logs`, `workout_log_entries`, `assignments`, `refresh_tokens`.
+- **Inheritance**: Must be implemented (e.g., `User` → `PersonalTrainer`, `Trainee`, `Admin`).
+- **Database Constraints**:
+  - `users.email` must be unique.
+  - `assignments` must enforce one active assignment per trainee.
+  - **Indices**: Add indices on frequently filtered columns (e.g., `user.role`, `workout_log.date`).
 
-* Good coding practices and a well-structured codebase.
+## 3. User Management
 
----
+A complete user management system is required.
 
-## General Requirements
+- **Registration**: Separate flows or roles for PTs and Trainees.
+- **Profile Image**: Users can update their profile picture.
+  - **Security**: Uploaded files must be renamed to a randomized **UUID**.
+  - **Validation**: Accept only image content-types (e.g., `image/png`, `image/jpeg`).
+  - **Safety**: Prevent path traversal attacks.
 
-### 1. Project Theme
+## 4. Authentication & Authorization
 
-* You are free to choose any theme for the application (e.g., e-commerce, task manager, social media dashboard).
+Security must be implemented using **JWT** (Access + Refresh Tokens).
 
-### 2. Entities and Domain Model
+- **Roles**: `ADMIN`, `PT`, `TRAINEE`.
+- **Ownership Enforcement**:
+  - **PTs** can only modify/delete **Workout Plans** they created.
+  - **PTs** can only view/manage **Trainees** assigned to them.
+  - **Trainees** can only view their own assignments and create their own logs.
+  - **Admins** have global access to all resources.
 
-* The domain model must include at least **eight tables**.
+## 5. REST APIs
 
-* Relationships must be coherent and meaningful.
+Expose consistent JSON REST APIs.
 
-* The model must contain at least one **inheritance structure** to justify a domain hierarchy.
+- Use **DTOs** for all inputs and outputs (never expose entities directly).
+- **Error Handling**: Implement a `GlobalExceptionHandler` returning structured JSON errors (timestamp, status, message).
+- **Validation**: Use Bean Validation (`@NotNull`, `@Email`, etc.) on all inputs.
 
-### 3. User Management
+## 6. Queries & Data Manipulation
 
-* A complete user management system is required.
+- **Aggregations**: Implement complex queries (e.g., counting Trainees per PT, filtering Plans by difficulty).
+- **Pagination**: All list endpoints must support pagination.
+- **Time Handling**: Use **UTC** (`Instant`) for all server-side timestamps.
 
-* Each user must have an email, password, and an updatable profile image.
+## 7. 3rd Party Integrations
 
-* Profiles must include personal details such as name, surname, and registration date.
+Integrate at least two external APIs.
 
-### 4. Authentication and Authorization
+1. **ExerciseDB**: For fetching exercise metadata and GIFs.
+2. **Cloudinary**: For hosting profile images.
 
-* Security must be implemented using **JWT (JSON Web Tokens)**.
+- **Graceful Fallback**: The application **must start** even if API keys are missing. In such cases, features dependent on these APIs should degrade gracefully (e.g., return mock data or specific error codes) rather than crashing the server.
 
-* The system must include at least **three distinct roles**, each with specific permissions and access rules.
+## 8. Supporting Material
 
-### 5. REST APIs and Error Handling
-
-* The system must expose REST APIs following consistent principles for requests and responses.
-
-* All incoming data must be validated.
-
-* Errors must be handled through structured and meaningful responses.
-
-### 6. Queries and Data Manipulation
-
-* Queries should support real use cases and be implemented efficiently.
-
-* Implementation can use JPA query methods, JPQL, or native SQL.
-
-* Features must include filtering, sorting, aggregations, and multi-condition queries.
-
-### 7. Third-Party Integration
-
-* The backend must interact with at least **two third-party APIs**.
-
-* Retrieved information must be meaningfully incorporated into the application logic or functionality.
-
----
-
-## Supporting Material
-
-To be eligible for grading, the following materials must be provided:
-
-*
-
-**GitHub Repository:** Must include all code, running instructions, and a comprehensive **README.md** detailing features and environment variables.
-
-*
-
-**Postman Collection:** A JSON file containing all requests needed to test every feature.
-
-* Each request must include example payloads, parameters, and headers.
-
-*
-
-**Note:** Any functionality not included in the Postman collection will not be evaluated.
-
----
-
-## Evaluation and Optional Features
-
-*
-
-**Mandatory Requirements:** Failure to meet general requirements or security best practices will result in penalties.
-
-*
-
-**Extra Points:** Optional features can be added for extra credit, such as:
-
-* Integration with additional third-party APIs beyond the required two.
-* A dedicated **GraphQL** section.
-* Particularly complex or highly optimized queries.
-
->
-> **Good luck and happy coding!**
->
->
-
-Would you like me to help you brainstorm a project theme or draft the initial database schema based on these requirements?
+- **Git Repository**: Must include `pom.xml`, `application.yml` (using env vars), and this `README`.
+- **Docker Compose** (Recommended): A `docker-compose.yml` file to spin up PostgreSQL and the containerized application.
+- **Postman Collection**:
+  - Must include a **"Happy Path"** folder performing a full flow: *Register PT -> Register Trainee -> Create Plan -> Assign Plan -> Log Workout*.
+  - Must use **Pre-request Scripts** to automatically save and use JWT tokens from login responses.

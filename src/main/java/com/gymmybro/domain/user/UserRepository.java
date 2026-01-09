@@ -17,63 +17,68 @@ import java.util.UUID;
 @Repository
 public interface UserRepository extends JpaRepository<User, UUID> {
 
-    /**
-     * Find a user by email address.
-     */
-    Optional<User> findByEmail(String email);
+        /**
+         * Find a user by email address.
+         */
+        Optional<User> findByEmail(String email);
 
-    /**
-     * Check if a user exists with the given email.
-     */
-    boolean existsByEmail(String email);
+        /**
+         * Check if a user exists with the given email.
+         */
+        boolean existsByEmail(String email);
 
-    /**
-     * Count users by role.
-     */
-    long countByRole(UserRole role);
+        /**
+         * Count users by role.
+         */
+        long countByRole(UserRole role);
 
-    /**
-     * Find trainees assigned to a specific PT.
-     */
-    List<User> findByPersonalTrainerId(UUID ptId);
+        /**
+         * Find trainees assigned to a specific PT.
+         */
+        /**
+         * Find trainees assigned to a specific PT.
+         */
+        @Query("SELECT t FROM Trainee t WHERE t.personalTrainer.id = :ptId")
+        List<User> findByPersonalTrainerId(@Param("ptId") UUID ptId);
 
-    /**
-     * Find trainees assigned to a specific PT with pagination.
-     */
-    Page<User> findByPersonalTrainerId(UUID ptId, Pageable pageable);
+        /**
+         * Find trainees assigned to a specific PT with pagination.
+         */
+        @Query("SELECT t FROM Trainee t WHERE t.personalTrainer.id = :ptId")
+        Page<User> findByPersonalTrainerId(@Param("ptId") UUID ptId, Pageable pageable);
 
-    /**
-     * Find users by role with pagination.
-     */
-    Page<User> findByRole(UserRole role, Pageable pageable);
+        /**
+         * Find users by role with pagination.
+         */
+        Page<User> findByRole(UserRole role, Pageable pageable);
 
-    /**
-     * Find users by role and active status with pagination.
-     */
-    Page<User> findByRoleAndIsActive(UserRole role, boolean isActive, Pageable pageable);
+        /**
+         * Find users by role and active status with pagination.
+         */
+        Page<User> findByRoleAndIsActive(UserRole role, boolean isActive, Pageable pageable);
 
-    /**
-     * Search users by email or name containing (case-insensitive).
-     */
-    @Query("SELECT u FROM User u WHERE " +
-            "(LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
-            "LOWER(u.fullName) LIKE LOWER(CONCAT('%', :search, '%'))) " +
-            "AND (:role IS NULL OR u.role = :role) " +
-            "AND (:isActive IS NULL OR u.isActive = :isActive)")
-    Page<User> searchUsers(
-            @Param("search") String search,
-            @Param("role") UserRole role,
-            @Param("isActive") Boolean isActive,
-            Pageable pageable);
+        /**
+         * Search users by email or name containing (case-insensitive).
+         */
+        @Query("SELECT u FROM User u WHERE " +
+                        "(LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+                        "LOWER(u.fullName) LIKE LOWER(CONCAT('%', :search, '%'))) " +
+                        "AND (:role IS NULL OR u.role = :role) " +
+                        "AND (:isActive IS NULL OR u.isActive = :isActive)")
+        Page<User> searchUsers(
+                        @Param("search") String search,
+                        @Param("role") UserRole role,
+                        @Param("isActive") Boolean isActive,
+                        Pageable pageable);
 
-    /**
-     * Find all users with optional role and status filters.
-     */
-    @Query("SELECT u FROM User u WHERE " +
-            "(:role IS NULL OR u.role = :role) " +
-            "AND (:isActive IS NULL OR u.isActive = :isActive)")
-    Page<User> findWithFilters(
-            @Param("role") UserRole role,
-            @Param("isActive") Boolean isActive,
-            Pageable pageable);
+        /**
+         * Find all users with optional role and status filters.
+         */
+        @Query("SELECT u FROM User u WHERE " +
+                        "(:role IS NULL OR u.role = :role) " +
+                        "AND (:isActive IS NULL OR u.isActive = :isActive)")
+        Page<User> findWithFilters(
+                        @Param("role") UserRole role,
+                        @Param("isActive") Boolean isActive,
+                        Pageable pageable);
 }

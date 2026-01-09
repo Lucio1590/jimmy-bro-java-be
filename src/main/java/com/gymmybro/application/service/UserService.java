@@ -4,6 +4,8 @@ import com.gymmybro.application.dto.request.AssignTraineeRequest;
 import com.gymmybro.application.dto.request.UpdateStatusRequest;
 import com.gymmybro.application.dto.response.PaginatedResponse;
 import com.gymmybro.application.dto.response.UserResponse;
+import com.gymmybro.domain.user.PersonalTrainer;
+import com.gymmybro.domain.user.Trainee;
 import com.gymmybro.domain.user.User;
 import com.gymmybro.domain.user.UserRepository;
 import com.gymmybro.domain.user.UserRole;
@@ -143,14 +145,35 @@ public class UserService {
             throw new BadRequestException("Only users with TRAINEE role can be assigned");
         }
 
+        Trainee traineeUser = (Trainee) trainee;
+
         // Check if already assigned to another PT
-        if (trainee.getPersonalTrainer() != null) {
+        if (traineeUser.getPersonalTrainer() != null) {
             throw new BadRequestException("Trainee is already assigned to PT: " +
-                    trainee.getPersonalTrainer().getFullName());
+                    traineeUser.getPersonalTrainer().getFullName());
         }
 
-        trainee.setPersonalTrainer(pt);
-        User savedTrainee = userRepository.save(trainee);
+        // We know pt is PT or ADMIN from previous check, but for assignment we treat it
+        // as PersonalTrainer
+        // Wait, if it's ADMIN, can they be assigned as PT?
+        // The check was: if (pt.getRole() != UserRole.PT && pt.getRole() !=
+        // UserRole.ADMIN)
+        // If Role is ADMIN, casting to PersonalTrainer will fail if Admin class is
+        // separate.
+        // If Admin can assign themselves, they must be PersonalTrainer instance?
+        // The inheritance structure separates them.
+        // If an Admin wants to be a PT, they should probably have PT role or we need
+        // multi-role (which we don't have).
+        // For now, let's assume only PTs (PersonalTrainer class) can be assigned.
+        // If request.getPtId() points to an Admin, and Admin is not PersonalTrainer, we
+        // can't assign.
+
+        if (!(pt instanceof PersonalTrainer)) {
+            throw new BadRequestException("Target user must be a Personal Trainer");
+        }
+
+        traineeUser.setPersonalTrainer((PersonalTrainer) pt);
+        User savedTrainee = userRepository.save(traineeUser);
 
         log.info("Assigned trainee {} to PT {}", trainee.getId(), pt.getId());
         return UserResponse.fromEntity(savedTrainee);
@@ -168,7 +191,15 @@ public class UserService {
             throw new BadRequestException("User is not a trainee");
         }
 
-        if (trainee.getPersonalTrainer() == null) {
+        if (!(trainee instanceof Trainee)) {
+            // Should verify consistency, if role is TRAINEE but class is not Trainee
+            // something is wrong
+            throw new IllegalStateException("User role is TRAINEE but class is not Trainee");
+        }
+
+        Trainee traineeUser = (Trainee) trainee;
+
+        if (traineeUser.getPersonalTrainer() == null) {
             throw new BadRequestException("Trainee is not assigned to any PT");
         }
 
@@ -177,13 +208,13 @@ public class UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", requestingPtId));
 
         if (requestingUser.getRole() != UserRole.ADMIN &&
-                !trainee.getPersonalTrainer().getId().equals(requestingPtId)) {
+                !traineeUser.getPersonalTrainer().getId().equals(requestingPtId)) {
             throw new ForbiddenException("You can only unassign your own trainees");
         }
 
-        UUID previousPtId = trainee.getPersonalTrainer().getId();
-        trainee.setPersonalTrainer(null);
-        User savedTrainee = userRepository.save(trainee);
+        UUID previousPtId = traineeUser.getPersonalTrainer().getId();
+        traineeUser.setPersonalTrainer(null);
+        User savedTrainee = userRepository.save(traineeUser);
 
         log.info("Unassigned trainee {} from PT {}", traineeId, previousPtId);
         return UserResponse.fromEntity(savedTrainee);

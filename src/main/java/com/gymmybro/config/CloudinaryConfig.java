@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Configuration;
  * Configuration for Cloudinary image upload service.
  */
 @Configuration
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(name = "cloudinary.api-key")
 public class CloudinaryConfig {
 
     @Value("${cloudinary.cloud-name}")

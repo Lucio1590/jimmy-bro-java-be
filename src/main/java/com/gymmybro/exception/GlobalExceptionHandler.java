@@ -236,6 +236,63 @@ public class GlobalExceptionHandler {
         }
 
         /**
+         * Handle malformed JSON or invalid request body format (400)
+         */
+        @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
+        public ResponseEntity<ApiError> handleHttpMessageNotReadable(
+                        org.springframework.http.converter.HttpMessageNotReadableException ex,
+                        HttpServletRequest request) {
+                log.debug("Malformed JSON request: {}", ex.getMessage());
+
+                ApiError error = ApiError.builder()
+                                .status(HttpStatus.BAD_REQUEST.value())
+                                .error("BAD_REQUEST")
+                                .message("Malformed JSON request or invalid data format")
+                                .path(request.getRequestURI())
+                                .build();
+
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        }
+
+        /**
+         * Handle type mismatch errors (e.g. string instead of UUID in path) (400)
+         */
+        @ExceptionHandler(org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class)
+        public ResponseEntity<ApiError> handleTypeMismatch(
+                        org.springframework.web.method.annotation.MethodArgumentTypeMismatchException ex,
+                        HttpServletRequest request) {
+                log.debug("Type mismatch: {} should be of type {}", ex.getName(), ex.getRequiredType().getSimpleName());
+
+                ApiError error = ApiError.builder()
+                                .status(HttpStatus.BAD_REQUEST.value())
+                                .error("BAD_REQUEST")
+                                .message(String.format("Invalid value for parameter '%s'", ex.getName()))
+                                .path(request.getRequestURI())
+                                .build();
+
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        }
+
+        /**
+         * Handle missing request parameters (400)
+         */
+        @ExceptionHandler(org.springframework.web.bind.MissingServletRequestParameterException.class)
+        public ResponseEntity<ApiError> handleMissingParams(
+                        org.springframework.web.bind.MissingServletRequestParameterException ex,
+                        HttpServletRequest request) {
+                log.debug("Missing parameter: {}", ex.getParameterName());
+
+                ApiError error = ApiError.builder()
+                                .status(HttpStatus.BAD_REQUEST.value())
+                                .error("BAD_REQUEST")
+                                .message(String.format("Missing required parameter '%s'", ex.getParameterName()))
+                                .path(request.getRequestURI())
+                                .build();
+
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        }
+
+        /**
          * Handle NoHandlerFoundException (404) for non-existent endpoints
          */
         @ExceptionHandler(org.springframework.web.servlet.NoHandlerFoundException.class)

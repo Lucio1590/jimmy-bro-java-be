@@ -293,6 +293,62 @@ public class GlobalExceptionHandler {
         }
 
         /**
+         * Handle MaxUploadSizeExceededException (413)
+         */
+        @ExceptionHandler(org.springframework.web.multipart.MaxUploadSizeExceededException.class)
+        public ResponseEntity<ApiError> handleMaxSizeException(
+                        org.springframework.web.multipart.MaxUploadSizeExceededException ex,
+                        HttpServletRequest request) {
+                log.debug("Upload size exceeded: {}", ex.getMessage());
+
+                ApiError error = ApiError.builder()
+                                .status(HttpStatus.PAYLOAD_TOO_LARGE.value())
+                                .error("PAYLOAD_TOO_LARGE")
+                                .message("File size exceeds the maximum allowed limit")
+                                .path(request.getRequestURI())
+                                .build();
+
+                return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body(error);
+        }
+
+        /**
+         * Handle ImageUploadException (502)
+         */
+        @ExceptionHandler(com.gymmybro.exception.ImageUploadException.class)
+        public ResponseEntity<ApiError> handleImageUploadException(
+                        com.gymmybro.exception.ImageUploadException ex, HttpServletRequest request) {
+                log.error("Image upload failed: {}", ex.getMessage());
+
+                ApiError error = ApiError.builder()
+                                .status(HttpStatus.BAD_GATEWAY.value())
+                                .error("IMAGE_UPLOAD_FAILED")
+                                .message(ex.getMessage()) // "Failed to upload image: Connection reset"
+                                .path(request.getRequestURI())
+                                .build();
+
+                return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(error);
+        }
+
+        /**
+         * Handle method not supported (405)
+         */
+        @ExceptionHandler(org.springframework.web.HttpRequestMethodNotSupportedException.class)
+        public ResponseEntity<ApiError> handleMethodNotSupported(
+                        org.springframework.web.HttpRequestMethodNotSupportedException ex, HttpServletRequest request) {
+                log.debug("Method not supported: {}", ex.getMethod());
+
+                ApiError error = ApiError.builder()
+                                .status(HttpStatus.METHOD_NOT_ALLOWED.value())
+                                .error("METHOD_NOT_ALLOWED")
+                                .message(String.format("Request method '%s' not supported for this endpoint",
+                                                ex.getMethod()))
+                                .path(request.getRequestURI())
+                                .build();
+
+                return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(error);
+        }
+
+        /**
          * Handle NoHandlerFoundException (404) for non-existent endpoints
          */
         @ExceptionHandler(org.springframework.web.servlet.NoHandlerFoundException.class)

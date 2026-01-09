@@ -1,17 +1,11 @@
 {
 	"info": {
-		"_postman_id": "f5466cd1-43a7-4b58-91e6-4cc5ff94c822",
+		"_postman_id": "594f8ebc-6182-4daf-bf4d-c495023d190b",
 		"name": "Gimmy-Bro API (Java)",
 		"description": "Java Spring Boot API for Gimmy-Bro fitness application",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "24437105"
 	},
-	"variable": [
-		{
-			"key": "baseUrl",
-			"value": "http://localhost:8080",
-			"type": "string"
-		}
-	],
 	"item": [
 		{
 			"name": "Auth",
@@ -60,7 +54,9 @@
 									"    pm.environment.set(\"refreshToken\", jsonData.refreshToken);",
 									"}"
 								],
-								"type": "text/javascript"
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
 							}
 						}
 					],
@@ -74,7 +70,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"email\": \"admin@gimmy.com\",\n  \"password\": \"admin_password\"\n}"
+							"raw": "{\n  \"email\": \"admin@gymmybro.com\",\n  \"password\": \"admin123\"\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/v1/auth/token",
@@ -332,7 +328,43 @@
 							"variable": [
 								{
 									"key": "id",
-									"value": "{{userId}}"
+									"value": "0c35ed0d-83ed-4e12-b354-a08ab61c576f"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get User Profile Picture",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearerToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/users/:id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"users",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "0c35ed0d-83ed-4e12-b354-a08ab61c576f"
 								}
 							]
 						}
@@ -482,7 +514,7 @@
 								{
 									"key": "file",
 									"type": "file",
-									"src": ""
+									"src": "/Users/luciandiaconu/Downloads/linkdn.jpeg"
 								}
 							]
 						},
@@ -1635,6 +1667,13 @@
 					"response": []
 				}
 			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080",
+			"type": "string"
 		}
 	]
 }

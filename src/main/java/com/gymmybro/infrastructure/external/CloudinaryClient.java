@@ -1,9 +1,11 @@
 package com.gymmybro.infrastructure.external;
 
 import com.cloudinary.Cloudinary;
+import com.cloudinary.Transformation;
 import com.cloudinary.utils.ObjectUtils;
 import com.gymmybro.application.service.ImageStorageService;
 import com.gymmybro.exception.BadRequestException;
+import com.gymmybro.exception.ImageUploadException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -49,18 +51,20 @@ public class CloudinaryClient implements ImageStorageService {
         try {
             String publicId = profileFolder + "/" + userId.toString();
 
+            // Fix: Use Transformation object instead of Map
+            // This prevents "Invalid transformation component" errors
             Map<String, Object> uploadResult = cloudinary.uploader().upload(file.getBytes(),
                     ObjectUtils.asMap(
                             "public_id", publicId,
                             "overwrite", true,
                             "resource_type", "image",
-                            "transformation", ObjectUtils.asMap(
-                                    "width", 400,
-                                    "height", 400,
-                                    "crop", "fill",
-                                    "gravity", "face",
-                                    "quality", "auto",
-                                    "format", "webp")));
+                            "transformation", new Transformation<>()
+                                    .width(400)
+                                    .height(400)
+                                    .crop("fill")
+                                    .gravity("face")
+                                    .quality("auto")
+                                    .fetchFormat("webp")));
 
             String url = (String) uploadResult.get("secure_url");
             log.info("Successfully uploaded profile image for user {} to {}", userId, url);
@@ -68,7 +72,7 @@ public class CloudinaryClient implements ImageStorageService {
 
         } catch (IOException e) {
             log.error("Failed to upload profile image for user {}: {}", userId, e.getMessage());
-            throw new BadRequestException("Failed to upload image: " + e.getMessage());
+            throw new ImageUploadException("Failed to upload image: " + e.getMessage(), e);
         }
     }
 
@@ -95,7 +99,7 @@ public class CloudinaryClient implements ImageStorageService {
 
         } catch (IOException e) {
             log.error("Failed to delete profile image for user {}: {}", userId, e.getMessage());
-            throw new BadRequestException("Failed to delete image: " + e.getMessage());
+            throw new ImageUploadException("Failed to delete image: " + e.getMessage(), e);
         }
     }
 

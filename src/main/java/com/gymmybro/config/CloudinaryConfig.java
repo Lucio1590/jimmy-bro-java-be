@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 @org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(name = "cloudinary.api-key")
+@lombok.extern.slf4j.Slf4j
 public class CloudinaryConfig {
 
     @Value("${cloudinary.cloud-name}")
@@ -24,10 +25,19 @@ public class CloudinaryConfig {
 
     @Bean
     public Cloudinary cloudinary() {
+        // Sanitize inputs to remove accidental whitespace
+        String sanitizedCloudName = (cloudName != null) ? cloudName.trim() : null;
+        String sanitizedApiKey = (apiKey != null) ? apiKey.trim() : null;
+        String sanitizedApiSecret = (apiSecret != null) ? apiSecret.trim() : null;
+
+        log.info("Initializing Cloudinary with cloud-name: '{}' (length: {})", sanitizedCloudName,
+                (sanitizedCloudName != null ? sanitizedCloudName.length() : "null"));
+        log.info("Cloudinary API Key length: {}", (sanitizedApiKey != null ? sanitizedApiKey.length() : "null"));
+
         return new Cloudinary(ObjectUtils.asMap(
-                "cloud_name", cloudName,
-                "api_key", apiKey,
-                "api_secret", apiSecret,
+                "cloud_name", sanitizedCloudName,
+                "api_key", sanitizedApiKey,
+                "api_secret", sanitizedApiSecret,
                 "secure", true));
     }
 }

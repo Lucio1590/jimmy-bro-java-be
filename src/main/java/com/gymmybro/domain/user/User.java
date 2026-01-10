@@ -20,7 +20,9 @@ import org.springframework.security.core.userdetails.UserDetails;
  * Implements UserDetails to be used directly by Spring Security.
  */
 @Entity
-@Table(name = "users")
+@Table(name = "users", indexes = {
+        @Index(name = "idx_user_role", columnList = "role")
+})
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "role", discriminatorType = DiscriminatorType.STRING)
 @Getter

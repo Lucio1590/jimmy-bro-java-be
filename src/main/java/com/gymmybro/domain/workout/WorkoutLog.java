@@ -15,7 +15,9 @@ import java.util.UUID;
  * WorkoutLog entity representing a completed workout session by a trainee.
  */
 @Entity
-@Table(name = "workout_logs")
+@Table(name = "workout_logs", indexes = {
+        @Index(name = "idx_workout_log_date", columnList = "workout_date")
+})
 @Getter
 @Setter
 @NoArgsConstructor

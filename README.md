@@ -73,6 +73,7 @@ Layered Spring Boot application:
 - Domain: entities and aggregates under `domain` (users, tokens, workout structures).
 - Infrastructure: security, external clients, configuration (Cloudinary, ExerciseDB, JWT) under `infrastructure` and `config`.
 - Exception: centralized error handling under `exception`.
+- ER diagram: see [ER.md](ER.md).
 
 ---
 

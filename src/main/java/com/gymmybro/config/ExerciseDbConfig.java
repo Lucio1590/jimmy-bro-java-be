@@ -17,15 +17,5 @@ public class ExerciseDbConfig {
     /**
      * Base URL for ExerciseDB API
      */
-    private String baseUrl = "https://exercisedb.p.rapidapi.com";
-
-    /**
-     * RapidAPI key for authentication
-     */
-    private String apiKey;
-
-    /**
-     * RapidAPI host header value
-     */
-    private String host = "exercisedb.p.rapidapi.com";
+    private String baseUrl = "https://www.exercisedb.dev";
 }

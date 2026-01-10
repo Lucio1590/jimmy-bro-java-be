@@ -1,6 +1,7 @@
 package com.gymmybro.application.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -19,43 +20,36 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ExerciseDbApiResponse {
 
-    /**
-     * ExerciseDB unique ID (string, e.g., "0001")
-     */
+    @JsonProperty("exerciseId")
     private String id;
 
-    /**
-     * Exercise name
-     */
     private String name;
 
-    /**
-     * Target muscle (e.g., "abs")
-     */
-    private String target;
+    @JsonProperty("targetMuscles")
+    private List<String> targetMuscles;
 
-    /**
-     * Body part (e.g., "waist")
-     */
-    private String bodyPart;
+    @JsonProperty("bodyParts")
+    private List<String> bodyParts;
 
-    /**
-     * Equipment needed (e.g., "body weight")
-     */
-    private String equipment;
+    @JsonProperty("equipments")
+    private List<String> equipments;
 
-    /**
-     * GIF URL showing the exercise
-     */
     private String gifUrl;
 
-    /**
-     * Secondary muscles worked
-     */
     private List<String> secondaryMuscles;
 
-    /**
-     * Step-by-step instructions
-     */
     private List<String> instructions;
+
+    // Compatibility getters
+    public String getTarget() {
+        return (targetMuscles != null && !targetMuscles.isEmpty()) ? targetMuscles.get(0) : null;
+    }
+
+    public String getBodyPart() {
+        return (bodyParts != null && !bodyParts.isEmpty()) ? bodyParts.get(0) : null;
+    }
+
+    public String getEquipment() {
+        return (equipments != null && !equipments.isEmpty()) ? equipments.get(0) : null;
+    }
 }

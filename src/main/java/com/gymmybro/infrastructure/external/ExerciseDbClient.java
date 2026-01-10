@@ -1,8 +1,10 @@
 package com.gymmybro.infrastructure.external;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.gymmybro.application.dto.response.ExerciseDbApiResponse;
 import com.gymmybro.config.ExerciseDbConfig;
 import com.gymmybro.application.service.ExerciseProvider;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -14,7 +16,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * HTTP client for ExerciseDB API (RapidAPI).
+ * HTTP client for ExerciseDB API (Open Source v1).
  * Fetches exercise data for catalog population.
  */
 @Component
@@ -22,10 +24,8 @@ import java.util.List;
 public class ExerciseDbClient implements ExerciseProvider {
 
     private final WebClient webClient;
-    private final ExerciseDbConfig config;
 
     public ExerciseDbClient(ExerciseDbConfig config, WebClient.Builder webClientBuilder) {
-        this.config = config;
         this.webClient = webClientBuilder
                 .baseUrl(config.getBaseUrl())
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
@@ -44,17 +44,19 @@ public class ExerciseDbClient implements ExerciseProvider {
         log.info("Fetching exercises from ExerciseDB: limit={}, offset={}", limit, offset);
 
         try {
-            return webClient.get()
+            ExerciseDbResponseWrapper<ExerciseDbApiResponse> response = webClient.get()
                     .uri(uriBuilder -> uriBuilder
-                            .path("/exercises")
+                            .path("/api/v1/exercises")
                             .queryParam("limit", limit)
                             .queryParam("offset", offset)
                             .build())
-                    .headers(this::addRapidApiHeaders)
                     .retrieve()
-                    .bodyToMono(new org.springframework.core.ParameterizedTypeReference<List<ExerciseDbApiResponse>>() {
-                    })
+                    .bodyToMono(
+                            new org.springframework.core.ParameterizedTypeReference<ExerciseDbResponseWrapper<ExerciseDbApiResponse>>() {
+                            })
                     .block();
+
+            return response != null && response.getData() != null ? response.getData() : Collections.emptyList();
         } catch (WebClientResponseException e) {
             log.error("ExerciseDB API error: {} - {}", e.getStatusCode(), e.getMessage());
             throw new RuntimeException("Failed to fetch exercises from ExerciseDB: " + e.getMessage(), e);
@@ -67,7 +69,7 @@ public class ExerciseDbClient implements ExerciseProvider {
     @Override
     public List<ExerciseDbApiResponse> searchByName(String name) {
         log.info("Searching exercises by name: {}", name);
-        return fetchListFromEndpoint("/exercises/name/" + name);
+        return fetchListFromEndpoint("/api/v1/exercises/search?q=" + name);
     }
 
     /**
@@ -76,7 +78,7 @@ public class ExerciseDbClient implements ExerciseProvider {
     @Override
     public List<ExerciseDbApiResponse> filterByBodyPart(String bodyPart) {
         log.info("Filtering exercises by body part: {}", bodyPart);
-        return fetchListFromEndpoint("/exercises/bodyPart/" + bodyPart);
+        return fetchListFromEndpoint("/api/v1/exercises/filter?bodyParts=" + bodyPart);
     }
 
     /**
@@ -85,7 +87,7 @@ public class ExerciseDbClient implements ExerciseProvider {
     @Override
     public List<ExerciseDbApiResponse> filterByTarget(String target) {
         log.info("Filtering exercises by target: {}", target);
-        return fetchListFromEndpoint("/exercises/target/" + target);
+        return fetchListFromEndpoint("/api/v1/exercises/filter?muscles=" + target);
     }
 
     /**
@@ -94,7 +96,7 @@ public class ExerciseDbClient implements ExerciseProvider {
     @Override
     public List<ExerciseDbApiResponse> filterByEquipment(String equipment) {
         log.info("Filtering exercises by equipment: {}", equipment);
-        return fetchListFromEndpoint("/exercises/equipment/" + equipment);
+        return fetchListFromEndpoint("/api/v1/exercises/filter?equipment=" + equipment);
     }
 
     /**
@@ -102,7 +104,7 @@ public class ExerciseDbClient implements ExerciseProvider {
      */
     @Override
     public List<String> getBodyParts() {
-        return fetchListStrings("/exercises/bodyPartList");
+        return fetchListStrings("/api/v1/bodyparts");
     }
 
     /**
@@ -110,7 +112,7 @@ public class ExerciseDbClient implements ExerciseProvider {
      */
     @Override
     public List<String> getTargets() {
-        return fetchListStrings("/exercises/targetList");
+        return fetchListStrings("/api/v1/muscles");
     }
 
     /**
@@ -118,20 +120,20 @@ public class ExerciseDbClient implements ExerciseProvider {
      */
     @Override
     public List<String> getEquipment() {
-        return fetchListStrings("/exercises/equipmentList");
+        return fetchListStrings("/api/v1/equipments");
     }
 
     private List<ExerciseDbApiResponse> fetchListFromEndpoint(String path) {
         try {
-            List<ExerciseDbApiResponse> response = webClient.get()
+            ExerciseDbResponseWrapper<ExerciseDbApiResponse> response = webClient.get()
                     .uri(path)
-                    .headers(this::addRapidApiHeaders)
                     .retrieve()
-                    .bodyToMono(new org.springframework.core.ParameterizedTypeReference<List<ExerciseDbApiResponse>>() {
-                    })
+                    .bodyToMono(
+                            new org.springframework.core.ParameterizedTypeReference<ExerciseDbResponseWrapper<ExerciseDbApiResponse>>() {
+                            })
                     .block();
 
-            return response != null ? response : Collections.emptyList();
+            return response != null && response.getData() != null ? response.getData() : Collections.emptyList();
         } catch (WebClientResponseException e) {
             log.error("ExerciseDB API error for {}: {} - {}", path, e.getStatusCode(), e.getMessage());
             return Collections.emptyList();
@@ -140,19 +142,27 @@ public class ExerciseDbClient implements ExerciseProvider {
 
     private List<String> fetchListStrings(String path) {
         try {
-            List<String> response = webClient.get()
+            ExerciseDbResponseWrapper<ExerciseDbNamedItem> response = webClient.get()
                     .uri(path)
-                    .headers(this::addRapidApiHeaders)
                     .retrieve()
-                    .bodyToMono(new org.springframework.core.ParameterizedTypeReference<List<String>>() {
-                    })
+                    .bodyToMono(
+                            new org.springframework.core.ParameterizedTypeReference<ExerciseDbResponseWrapper<ExerciseDbNamedItem>>() {
+                            })
                     .block();
 
-            return response != null ? response : Collections.emptyList();
+            return response != null && response.getData() != null
+                    ? response.getData().stream().map(ExerciseDbNamedItem::getName).toList()
+                    : Collections.emptyList();
         } catch (WebClientResponseException e) {
             log.error("ExerciseDB API error for {}: {} - {}", path, e.getStatusCode(), e.getMessage());
             return Collections.emptyList();
         }
+    }
+
+    @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private static class ExerciseDbNamedItem {
+        private String name;
     }
 
     /**
@@ -167,8 +177,7 @@ public class ExerciseDbClient implements ExerciseProvider {
 
         try {
             return webClient.get()
-                    .uri("/exercises/exercise/{id}", externalId)
-                    .headers(this::addRapidApiHeaders)
+                    .uri("/api/v1/exercises/exercise/{id}", externalId)
                     .retrieve()
                     .bodyToMono(ExerciseDbApiResponse.class)
                     .block();
@@ -178,11 +187,9 @@ public class ExerciseDbClient implements ExerciseProvider {
         }
     }
 
-    /**
-     * Add RapidAPI authentication headers.
-     */
-    private void addRapidApiHeaders(HttpHeaders headers) {
-        headers.set("X-RapidAPI-Key", config.getApiKey());
-        headers.set("X-RapidAPI-Host", config.getHost());
+    @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private static class ExerciseDbResponseWrapper<T> {
+        private List<T> data;
     }
 }

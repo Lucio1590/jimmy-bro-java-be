@@ -42,6 +42,9 @@ Expected outcome:
 ./mvnw spring-boot:run
 ```
 
+Note: On Windows, use `mvnw.cmd` instead of `./mvnw`. (i only used it on mac, this comes from mvnw documentation)
+./mvnw will download dependencies on the first run. it is used to avoid requiring a local Maven installation.
+
 4. Health check:
 
 ```bash

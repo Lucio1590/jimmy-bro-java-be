@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "594f8ebc-6182-4daf-bf4d-c495023d190b",
+		"_postman_id": "068fd5ec-281f-496a-adf9-4df38ba646e0",
 		"name": "Gimmy-Bro API (Java)",
 		"description": "Java Spring Boot API for Gimmy-Bro fitness application",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
@@ -71,6 +71,190 @@
 						"body": {
 							"mode": "raw",
 							"raw": "{\n  \"email\": \"admin@gymmybro.com\",\n  \"password\": \"admin123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/auth/token",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"token"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login as Admin (seeded)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.accessToken) {",
+									"    pm.environment.set(\"bearerToken\", jsonData.accessToken);",
+									"}",
+									"if (jsonData.refreshToken) {",
+									"    pm.environment.set(\"refreshToken\", jsonData.refreshToken);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"admin@gymmybro.com\",\n  \"password\": \"admin123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/auth/token",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"token"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login as PT1 (seeded)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.accessToken) {",
+									"    pm.environment.set(\"bearerToken\", jsonData.accessToken);",
+									"}",
+									"if (jsonData.refreshToken) {",
+									"    pm.environment.set(\"refreshToken\", jsonData.refreshToken);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"pt1@gymmybro.com\",\n  \"password\": \"password\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/auth/token",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"token"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login as PT2 (seeded)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.accessToken) {",
+									"    pm.environment.set(\"bearerToken\", jsonData.accessToken);",
+									"}",
+									"if (jsonData.refreshToken) {",
+									"    pm.environment.set(\"refreshToken\", jsonData.refreshToken);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"pt2@gymmybro.com\",\n  \"password\": \"password\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/auth/token",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"token"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login as Trainee1 (seeded)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.accessToken) {",
+									"    pm.environment.set(\"bearerToken\", jsonData.accessToken);",
+									"}",
+									"if (jsonData.refreshToken) {",
+									"    pm.environment.set(\"refreshToken\", jsonData.refreshToken);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"trainee1@gymmybro.com\",\n  \"password\": \"password\"\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/v1/auth/token",
@@ -658,8 +842,8 @@
 							"variable": [
 								{
 									"key": "externalId",
-									"value": "0001",
-									"description": "ExerciseDB ID (string, e.g., 0001)"
+									"value": "exr_41n2hxnFMotsXTj3",
+									"description": "ExerciseDB ID (seeded example: Bench Press)"
 								}
 							]
 						}
@@ -904,7 +1088,7 @@
 			]
 		},
 		{
-			"name": "Workout Plans",
+			"name": "Workout Plans (ADMIN, PT)",
 			"item": [
 				{
 					"name": "Create Workout Plan",
@@ -1004,7 +1188,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/v1/workout-plans/my-plans?page=0&size=20",
+							"raw": "{{baseUrl}}/api/v1/workout-plans/my-plans",
 							"host": [
 								"{{baseUrl}}"
 							],
@@ -1017,11 +1201,13 @@
 							"query": [
 								{
 									"key": "page",
-									"value": "0"
+									"value": "0",
+									"disabled": true
 								},
 								{
 									"key": "size",
-									"value": "20"
+									"value": "20",
+									"disabled": true
 								}
 							]
 						}
@@ -1310,7 +1496,7 @@
 			]
 		},
 		{
-			"name": "Workout Execution",
+			"name": "Workout Execution (USER)",
 			"item": [
 				{
 					"name": "Get Active Workout",

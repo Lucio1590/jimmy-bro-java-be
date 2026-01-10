@@ -67,19 +67,19 @@ public class WorkoutPlanController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/mine")
-    @PreAuthorize("hasAnyRole('PT', 'ADMIN')")
-    @Operation(summary = "Get my workout plans", description = "Get workout plans created by the current user")
-    public ResponseEntity<PaginatedResponse<WorkoutPlanSummaryResponse>> getMyWorkoutPlans(
+        @GetMapping({"/mine", "/my-plans"})
+        @PreAuthorize("hasAnyRole('PT', 'ADMIN')")
+        @Operation(summary = "Get my workout plans", description = "Get workout plans created by the current user")
+        public ResponseEntity<PaginatedResponse<WorkoutPlanSummaryResponse>> getMyWorkoutPlans(
             @AuthenticationPrincipal User currentUser,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         PaginatedResponse<WorkoutPlanSummaryResponse> response = workoutPlanService
-                .getMyWorkoutPlans(currentUser.getId(), pageable);
+            .getMyWorkoutPlans(currentUser.getId(), pageable);
         return ResponseEntity.ok(response);
-    }
+        }
 
     @GetMapping("/{id}")
     @Operation(summary = "Get workout plan", description = "Get workout plan with full details including days, blocks, and exercises")

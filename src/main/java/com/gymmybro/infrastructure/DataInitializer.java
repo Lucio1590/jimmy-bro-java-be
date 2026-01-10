@@ -48,8 +48,8 @@ public class DataInitializer implements ApplicationRunner {
             log.info("Database is empty. Seeding initial data...");
             try {
                 User admin = seedAdminUser();
-                List<User> pts = seedPersonalTrainers();
-                List<User> trainees = seedTrainees();
+                List<PersonalTrainer> pts = seedPersonalTrainers();
+                List<Trainee> trainees = seedTrainees(pts);
 
                 // Use preconfigured exercises instead of API calls
                 Map<String, ExerciseDbApiResponse> exercises = getPreconfiguredExercises();
@@ -90,10 +90,10 @@ public class DataInitializer implements ApplicationRunner {
         return admin;
     }
 
-    private List<User> seedPersonalTrainers() {
-        List<User> pts = new ArrayList<>();
+        private List<PersonalTrainer> seedPersonalTrainers() {
+                List<PersonalTrainer> pts = new ArrayList<>();
 
-        User pt1 = PersonalTrainer.builder()
+        PersonalTrainer pt1 = PersonalTrainer.builder()
                 .email("pt1@gymmybro.com")
                 .hashedPassword(passwordEncoder.encode("password"))
                 .fullName("Mike Mentzer")
@@ -101,7 +101,7 @@ public class DataInitializer implements ApplicationRunner {
                 .emailVerified(true)
                 .build();
 
-        User pt2 = PersonalTrainer.builder()
+        PersonalTrainer pt2 = PersonalTrainer.builder()
                 .email("pt2@gymmybro.com")
                 .hashedPassword(passwordEncoder.encode("password"))
                 .fullName("Arnold S")
@@ -115,22 +115,42 @@ public class DataInitializer implements ApplicationRunner {
         return pts;
     }
 
-    private List<User> seedTrainees() {
-        List<User> trainees = new ArrayList<>();
+        private List<Trainee> seedTrainees(List<PersonalTrainer> pts) {
+                List<Trainee> trainees = new ArrayList<>();
 
-        for (int i = 1; i <= 3; i++) {
-            User trainee = Trainee.builder()
-                    .email("trainee" + i + "@gymmybro.com")
-                    .hashedPassword(passwordEncoder.encode("password"))
-                    .fullName("Trainee " + i)
-                    .isActive(true)
-                    .emailVerified(true)
-                    .build();
-            trainees.add(userRepository.save(trainee));
+                // Map trainees to trainers: trainee1, trainee4 -> pt1; trainee2, trainee3, trainee5 -> pt2
+                String[][] traineeMappings = new String[][] {
+                                {"trainee1@gymmybro.com", "Trainee 1", "0"},
+                                {"trainee2@gymmybro.com", "Trainee 2", "1"},
+                                {"trainee3@gymmybro.com", "Trainee 3", "1"},
+                                {"trainee4@gymmybro.com", "Trainee 4", "0"},
+                                {"trainee5@gymmybro.com", "Trainee 5", "1"}
+                };
+
+                for (String[] t : traineeMappings) {
+                        int ptIndex = Integer.parseInt(t[2]);
+                        PersonalTrainer trainer = pts.get(ptIndex);
+
+                        Trainee trainee = Trainee.builder()
+                                        .email(t[0])
+                                        .hashedPassword(passwordEncoder.encode("password"))
+                                        .fullName(t[1])
+                                        .isActive(true)
+                                        .emailVerified(true)
+                                        .personalTrainer(trainer)
+                                        .build();
+
+                        trainees.add(userRepository.save(trainee));
+
+                        // Maintain bidirectional link if the collection is present
+                        if (trainer.getTrainees() != null) {
+                                trainer.getTrainees().add(trainee);
+                        }
+                }
+
+                log.info("Created {} Trainees and linked them to trainers", trainees.size());
+                return trainees;
         }
-        log.info("Created 3 Trainees");
-        return trainees;
-    }
 
     /**
      * Returns preconfigured exercises with real ExerciseDB IDs.
@@ -326,7 +346,7 @@ public class DataInitializer implements ApplicationRunner {
         return Integer.parseInt(rest.replace("s", ""));
     }
 
-    private void seedAssignments(List<WorkoutPlan> plans, List<User> trainees, User pt) {
+        private void seedAssignments(List<WorkoutPlan> plans, List<Trainee> trainees, PersonalTrainer pt) {
         if (plans.isEmpty() || trainees.isEmpty())
             return;
 

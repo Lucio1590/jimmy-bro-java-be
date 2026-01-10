@@ -43,7 +43,7 @@ public interface WorkoutPlanRepository extends JpaRepository<WorkoutPlan, UUID> 
     @Query("SELECT wp FROM WorkoutPlan wp WHERE " +
             "(:creatorId IS NULL OR wp.createdBy.id = :creatorId) AND " +
             "(:difficultyLevel IS NULL OR wp.difficultyLevel = :difficultyLevel) AND " +
-            "(:name IS NULL OR LOWER(wp.name) LIKE LOWER(CONCAT('%', :name, '%'))) AND " +
+            "(:name IS NULL OR LOWER(wp.name) LIKE CONCAT('%', LOWER(:name), '%')) AND " +
             "wp.isActive = true")
     Page<WorkoutPlan> findByFilters(
             @Param("creatorId") UUID creatorId,

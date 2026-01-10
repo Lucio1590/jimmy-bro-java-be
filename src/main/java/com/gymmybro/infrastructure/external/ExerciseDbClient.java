@@ -16,7 +16,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * HTTP client for ExerciseDB API (Open Source v1).
+ * HTTP client for ExerciseDB API (RapidAPI).
  * Fetches exercise data for catalog population.
  */
 @Component
@@ -24,12 +24,25 @@ import java.util.List;
 public class ExerciseDbClient implements ExerciseProvider {
 
     private final WebClient webClient;
+    private final ExerciseDbConfig config;
 
     public ExerciseDbClient(ExerciseDbConfig config, WebClient.Builder webClientBuilder) {
-        this.webClient = webClientBuilder
+        this.config = config;
+        
+        WebClient.Builder builder = webClientBuilder
                 .baseUrl(config.getBaseUrl())
-                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .build();
+                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+        
+        // Add RapidAPI headers if configured
+        if (config.isRapidApiEnabled()) {
+            builder.defaultHeader("X-RapidAPI-Key", config.getApiKey())
+                   .defaultHeader("X-RapidAPI-Host", config.getHost());
+            log.info("ExerciseDB client configured with RapidAPI authentication");
+        } else {
+            log.warn("ExerciseDB client running without RapidAPI key - some features may not work");
+        }
+        
+        this.webClient = builder.build();
     }
 
     /**

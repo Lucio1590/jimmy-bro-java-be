@@ -47,7 +47,9 @@ jwt:
 
 # Third-Party APIs
 exercisedb:
-  base-url: https://www.exercisedb.dev
+  base-url: ${EXERCISEDB_HOST:https://exercisedb-api1.p.rapidapi.com}
+  api-key: ${RAPIDAPI_KEY:}
+  host: exercisedb-api1.p.rapidapi.com
 
 cloudinary:
   cloud-name: ${CLOUDINARY_CLOUD_NAME}

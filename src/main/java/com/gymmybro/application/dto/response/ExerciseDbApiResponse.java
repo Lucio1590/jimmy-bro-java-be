@@ -34,11 +34,19 @@ public class ExerciseDbApiResponse {
     @JsonProperty("equipments")
     private List<String> equipments;
 
-    private String gifUrl;
+    @JsonProperty("imageUrl")
+    private String imageUrl;
+
+    private String exerciseType;
 
     private List<String> secondaryMuscles;
 
     private List<String> instructions;
+
+    // Backwards compatibility alias for gifUrl
+    public String getGifUrl() {
+        return imageUrl;
+    }
 
     // Compatibility getters
     public String getTarget() {
